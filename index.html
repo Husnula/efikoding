@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EfiKoding - Platform Diagnostik Efikasi Diri & Logika Komputasional</title>
+  
+  <!-- Font Modern: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Styling Dasar & Scrollbar Halus */
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    
+    /* Indikator Halus untuk Elemen Editable */
+    [contenteditable="true"] {
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    [contenteditable="true"]:hover {
+      background-color: rgba(239, 246, 255, 0.6);
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px #93c5fd;
+    }
+    [contenteditable="true"]:focus {
+      background-color: #ffffff;
+      border-radius: 4px;
+      box-shadow: 0 0 0 2px #2563eb;
+    }
+
+    /* Print Stylesheet untuk 100% Parity Cetak PDF */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #report-print-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased text-slate-800">
+
+  <!-- ========================================== -->
+  <!-- 1. HEADER NAVIGASI GLOBAL & ROLE SWITCHER  -->
+  <!-- ========================================== -->
+  <header class="no-print bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo & Nama Aplikasi -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
+          <i data-lucide="compass" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-lg font-bold tracking-tight text-slate-900">EfiKoding</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold border border-slate-200">v1.0.0</span>
+          </div>
+          <p class="text-xs text-slate-500 font-medium">Diagnostik Efikasi Diri & Logika Komputasional</p>
+        </div>
+      </div>
+
+      <!-- Role Switcher Segmented Control -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
+        <button id="role-btn-student" onclick="setRole('student')" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+          <i data-lucide="user" class="w-4 h-4"></i>
+          <span>Mode Siswa (User)</span>
+        </button>
+        <button id="role-btn-admin" onclick="setRole('admin')" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all bg-white text-blue-700 shadow-sm border border-slate-200">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Mode Guru (Admin)</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- 2. KONTEN UTAMA: MODUL SISWA (USER ROLE)   -->
+  <!-- ========================================== -->
+  <main id="view-student" class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 hidden">
+    
+    <!-- Step 1: Onboarding & Pilihan Level Asesmen -->
+    <div id="student-step-onboarding" class="space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="max-w-2xl">
+          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 mb-3">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+            <span>Asesmen Diagnostik Awal</span>
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Selamat Datang di EfiKoding</h1>
+          <p class="mt-2 text-slate-600 text-sm sm:text-base leading-relaxed">
+            Asesmen ini dirancang untuk memetakan cara berpikir logis dan keyakinan dirimu saat menyelesaikan tantangan komputasi. Kerjakan dengan jujur dan santai, tidak ada nilai salah yang menghakimi.
+          </p>
+        </div>
+
+        <hr class="my-6 border-slate-100">
+
+        <!-- Form Identitas Siswa -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Nama Lengkap Siswa</label>
+            <input type="text" id="student-name-input" placeholder="Contoh: Arkan Danendra" value="Arkan Danendra" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Kelas / Jenjang Pendidikan</label>
+            <select id="student-grade-input" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+              <option value="Fase A/B - Kelas 3-4 SD">Fase A/B - Kelas 3-4 SD</option>
+              <option value="Fase C - Kelas 5-6 SD" selected>Fase C - Kelas 5-6 SD</option>
+              <option value="Fase D - Kelas 7-9 SMP">Fase D - Kelas 7-9 SMP</option>
+              <option value="Fase E/F - Kelas 10-12 SMA/SMK">Fase E/F - Kelas 10-12 SMA/SMK</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Pemilihan Level Asesmen -->
+        <div class="mt-6">
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">Pilih Paket Tantangan Asesmen</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all border-slate-200 hover:border-slate-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/40">
+              <input type="radio" name="student-level-choice" value="A" class="sr-only">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-bold text-slate-900">Level A: Unplugged</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">Logika Dasar</span>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Tantangan berpikir komputasional tanpa komputer. Menguji pengenalan pola, dekomposisi langkah, dan logika sekuensial konkret.
+              </p>
+            </label>
+
+            <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all border-blue-600 bg-blue-50/40 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/40">
+              <input type="radio" name="student-level-choice" value="B" checked class="sr-only">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-bold text-slate-900">Level B: Plugged</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">Algoritma & Kode</span>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Tantangan berbasis pseudocode/blok kode. Menguji pelacakan variabel (*state*), logika percabangan (*if-else*), dan efisiensi perulangan.
+              </p>
+            </label>
+
+          </div>
+        </div>
+
+        <div class="mt-8 flex justify-end">
+          <button onclick="startStudentAssessment()" class="inline-flex items-center space-x-2 px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition-colors">
+            <span>Mulai Sesi Angket & Kuis</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Sesi 1 - Angket Efikasi Diri Baku (12 Butir Likert) -->
+    <div id="student-step-survey" class="space-y-6 hidden">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        
+        <!-- Header Sesi Angket -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 gap-2">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Bagian 1 dari 2</span>
+              <span class="text-slate-300">•</span>
+              <span class="text-xs text-slate-500 font-medium">12 Butir Baku</span>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 mt-1">Skala Efikasi Diri Komputasional</h2>
+          </div>
+          <div class="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-md border border-slate-200">
+            Skala 1 (Sangat Tidak Yakin) s/d 5 (Sangat Yakin)
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-600 mt-3 leading-relaxed">
+          Petunjuk: Pilihlah angka yang paling menggambarkan keyakinan dirimu saat menghadapi tantangan logika atau pemrograman.
+        </p>
+
+        <!-- Wadah Daftar Butir Angket (Diinjeksi Dinamis oleh JavaScript) -->
+        <div id="survey-items-container" class="mt-6 space-y-6"></div>
+
+        <div class="mt-8 flex justify-between items-center pt-4 border-t border-slate-100">
+          <button onclick="backToOnboarding()" class="inline-flex items-center space-x-1.5 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Kembali</span>
+          </button>
+          <button onclick="submitSurveyAndStartQuiz()" class="inline-flex items-center space-x-2 px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition-colors">
+            <span>Lanjut ke Tantangan Koding</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Sesi 2 - Pengerjaan Soal CT Diagnostik + Confidence Slider -->
+    <div id="student-step-quiz" class="space-y-6 hidden">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        
+        <!-- Header Soal & Progres -->
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div>
+            <span id="quiz-question-badge" class="text-xs font-bold text-blue-600 uppercase tracking-wider">Soal 1 dari 4</span>
+            <h2 id="quiz-question-domain" class="text-lg font-bold text-slate-900 mt-0.5">Domain: Decomposition</h2>
+          </div>
+          <div class="w-32 bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div id="quiz-progress-bar" class="bg-blue-600 h-full w-1/4 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <!-- Isi Soal -->
+        <div class="mt-6 space-y-4">
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+            <p id="quiz-context-text" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line"></p>
+          </div>
+          
+          <h3 id="quiz-question-text" class="text-sm sm:text-base font-semibold text-slate-900"></h3>
+
+          <!-- Pilihan Opsi Jawaban (A, B, C, D) -->
+          <div id="quiz-options-container" class="space-y-2.5 pt-2"></div>
+        </div>
+
+        <!-- Task-Specific Confidence Slider (Kalibrasi Metakognitif per Soal) -->
+        <div class="mt-8 pt-6 border-t border-slate-200 bg-slate-50/70 -mx-6 -mb-6 p-6 rounded-b-xl">
+          <div class="flex items-center space-x-2 mb-2">
+            <i data-lucide="gauge" class="w-4 h-4 text-blue-600"></i>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">Tingkat Keyakinanmu Pada Jawaban Ini</h4>
+          </div>
+          <p class="text-xs text-slate-600 mb-4">
+            Seberapa yakin kamu bahwa alur logika dan jawaban yang kamu pilih di atas sudah tepat?
+          </p>
+
+          <input type="range" id="confidence-slider" min="1" max="5" value="3" step="1" oninput="updateConfidenceDisplay(this.value)" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+
+          <div class="flex justify-between text-[11px] text-slate-500 font-medium mt-2">
+            <span class="text-left w-1/5">1: Menebak (20%)</span>
+            <span class="text-center w-1/5">2: Ragu (40%)</span>
+            <span class="text-center w-1/5">3: Cukup (60%)</span>
+            <span class="text-center w-1/5">4: Yakin (80%)</span>
+            <span class="text-right w-1/5">5: Sangat Yakin (100%)</span>
+          </div>
+
+          <div class="mt-3 text-center">
+            <span id="confidence-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+              Skala 3: Cukup Yakin (60%)
+            </span>
+          </div>
+        </div>
+
+        <!-- Tombol Navigasi Soal -->
+        <div class="mt-8 flex justify-between items-center">
+          <button id="quiz-prev-btn" onclick="prevQuizQuestion()" class="inline-flex items-center space-x-1.5 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium disabled:opacity-40" disabled>
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Soal Sebelumnya</span>
+          </button>
+          <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="inline-flex items-center space-x-2 px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition-colors">
+            <span>Soal Selanjutnya</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Step 4: Hasil Siswa (Growth Mindset Reflection) -->
+    <div id="student-step-result" class="space-y-6 hidden">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        
+        <div class="text-center max-w-lg mx-auto">
+          <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="check-check" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-slate-900">Hebat, Sesi Asesmen Selesai!</h2>
+          <p class="text-slate-600 text-sm mt-1">
+            Terima kasih telah berpartisipasi, <span id="res-student-name" class="font-semibold text-slate-900"></span>. Berikut adalah ringkasan eksplorasi komputasimu.
+          </p>
+        </div>
+
+        <!-- Kartu Metrik Siswa -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+          <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Skor Kemampuan Logika</span>
+            <div class="flex items-baseline space-x-2 mt-2">
+              <span id="res-skill-score" class="text-3xl font-bold text-slate-900">0</span>
+              <span class="text-xs text-slate-500 font-medium">/ 100</span>
+            </div>
+            <p id="res-skill-desc" class="text-xs text-slate-600 mt-2"></p>
+          </div>
+
+          <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Indeks Keyakinan Diri</span>
+            <div class="flex items-baseline space-x-2 mt-2">
+              <span id="res-eff-score" class="text-3xl font-bold text-blue-600">0%</span>
+              <span class="text-xs text-slate-500 font-medium">(Skala Efikasi)</span>
+            </div>
+            <p id="res-eff-desc" class="text-xs text-slate-600 mt-2"></p>
+          </div>
+        </div>
+
+        <!-- Kartu Refleksi & Growth Mindset -->
+        <div class="mt-6 p-6 rounded-xl border border-blue-200 bg-blue-50/50">
+          <div class="flex items-start space-x-3">
+            <div class="p-2 rounded-lg bg-blue-600 text-white shrink-0">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Pesan Pengembang Diri (Growth Mindset)</h3>
+              <p id="res-mindset-message" class="text-xs sm:text-sm text-slate-700 mt-1.5 leading-relaxed"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 flex justify-center space-x-4">
+          <button onclick="setRole('admin'); syncStudentToAdmin();" class="inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition-colors shadow-sm">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>Buka Laporan Lengkap di Mode Guru</span>
+          </button>
+          <button onclick="location.reload()" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-sm transition-colors">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>Ulangi Asesmen</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ========================================== -->
+  <!-- 3. KONTEN UTAMA: MODUL GURU / ADMIN ROLE   -->
+  <!-- ========================================== -->
+  <div id="view-admin" class="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8">
+    
+    <!-- Split-Screen Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- ================================================= -->
+      <!-- PANEL KIRI (COL 1-5): KONTROL & KALKULATOR CEPAT  -->
+      <!-- ================================================= -->
+      <div id="panel-kiri-kontrol" class="lg:col-span-5 space-y-6 no-print">
+        
+        <!-- Tab Navigasi Panel Kiri -->
+        <div class="bg-white rounded-xl border border-slate-200 p-2 flex space-x-1 shadow-sm">
+          <button id="admin-tab-calc" onclick="setAdminTab('calc')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-blue-600 text-white flex items-center justify-center space-x-1.5 transition-all">
+            <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+            <span>Kalkulator Diagnostik Cepat</span>
+          </button>
+          <button id="admin-tab-bank" onclick="setAdminTab('bank')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center space-x-1.5 transition-all">
+            <i data-lucide="database" class="w-3.5 h-3.5"></i>
+            <span>Bank Soal & Rubrik</span>
+          </button>
+        </div>
+
+        <!-- KONTEN TAB 1: KALKULATOR DIAGNOSTIK CEPAT -->
+        <div id="admin-content-calc" class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-5">
+          
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-blue-600"></i>
+              <span>Parameter Asesmen Siswa</span>
+            </h2>
+            <button onclick="loadSampleData('mastery')" class="text-xs text-blue-600 hover:text-blue-800 font-semibold underline">
+              Muat Sampel
+            </button>
+          </div>
+
+          <!-- Identitas Siswa -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Siswa</label>
+              <input type="text" id="admin-input-name" value="Arkan Danendra" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Kelas / Fase</label>
+              <input type="text" id="admin-input-grade" value="Fase C - Kelas 5 SD" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Paket Soal</label>
+            <div class="flex space-x-3">
+              <label class="flex items-center space-x-2 text-xs text-slate-700 cursor-pointer">
+                <input type="radio" name="admin-level-radio" value="A" onchange="recalculateAdminScores()" class="text-blue-600">
+                <span>Level A (Unplugged)</span>
+              </label>
+              <label class="flex items-center space-x-2 text-xs text-slate-700 cursor-pointer">
+                <input type="radio" name="admin-level-radio" value="B" checked onchange="recalculateAdminScores()" class="text-blue-600">
+                <span>Level B (Plugged)</span>
+              </label>
+            </div>
+          </div>
+
+          <hr class="border-slate-100">
+
+          <!-- Slider 4 Domain Berpikir Komputasional -->
+          <div class="space-y-3.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 block">Skor 4 Domain CT (0 - 100)</span>
+            
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-600">1. Decomposition (Dekomposisi)</span>
+                <span id="admin-val-decomp" class="font-bold text-slate-900">75%</span>
+              </div>
+              <input type="range" id="admin-slider-decomp" min="0" max="100" value="75" step="5" oninput="onDomainSliderChange()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-600">2. Pattern Recognition (Pola)</span>
+                <span id="admin-val-pattern" class="font-bold text-slate-900">100%</span>
+              </div>
+              <input type="range" id="admin-slider-pattern" min="0" max="100" value="100" step="5" oninput="onDomainSliderChange()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-600">3. Algorithmic Sequencing / Logic</span>
+                <span id="admin-val-logic" class="font-bold text-slate-900">75%</span>
+              </div>
+              <input type="range" id="admin-slider-logic" min="0" max="100" value="75" step="5" oninput="onDomainSliderChange()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-600">4. Debugging & Error Tracing</span>
+                <span id="admin-val-debug" class="font-bold text-slate-900">50%</span>
+              </div>
+              <input type="range" id="admin-slider-debug" min="0" max="100" value="50" step="5" oninput="onDomainSliderChange()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+          </div>
+
+          <hr class="border-slate-100">
+
+          <!-- Input Rata-rata Skor Efikasi Diri -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-bold text-slate-700">Rata-rata Skor Efikasi Diri (Skala 1.0 - 5.0)</span>
+              <span id="admin-val-eff" class="font-bold text-blue-600">4.10 / 5.0 (82%)</span>
+            </div>
+            <input type="range" id="admin-slider-eff" min="1.0" max="5.0" value="4.1" step="0.1" oninput="onEfficacySliderChange()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            <p class="text-[11px] text-slate-500 mt-1">Dihitung dari rata-rata 12 butir angket baku atau slider kalibrasi soal.</p>
+          </div>
+
+          <!-- Log Hasil Kalkulasi Psikometrik Lokal -->
+          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5 text-xs font-mono">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Skor Skill ($S_{skill}$):</span>
+              <span id="calc-sskill-text" class="font-bold text-slate-900">75.0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Skor Efikasi ($S_{eff}$):</span>
+              <span id="calc-seff-text" class="font-bold text-blue-600">82.0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Indeks Kalibrasi ($I_{cal}$):</span>
+              <span id="calc-ical-text" class="font-bold text-slate-900">+7.0 (Akurat)</span>
+            </div>
+            <div class="flex justify-between pt-1 border-t border-slate-200">
+              <span class="text-slate-500">Kuadran Diagnostik:</span>
+              <span id="calc-quadrant-badge" class="font-bold text-emerald-600">Q1: MASTERY</span>
+            </div>
+          </div>
+
+          <!-- Pemicu Eksekusi AI & Fallback Generator -->
+          <div class="space-y-2 pt-2">
+            <button onclick="triggerGenerateReport()" class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors flex items-center justify-center space-x-2">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>Proses & Perbarui Narasi Diagnostik</span>
+            </button>
+            <div class="flex space-x-2">
+              <button onclick="exportToWord()" class="flex-1 py-2 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs flex items-center justify-center space-x-1.5 shadow-sm">
+                <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                <span>Unduh Word (.doc)</span>
+              </button>
+              <button onclick="printReport()" class="flex-1 py-2 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs flex items-center justify-center space-x-1.5 shadow-sm">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Cetak / PDF</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- KONTEN TAB 2: BANK SOAL & RUBRIK (ACCORDION) -->
+        <div id="admin-content-bank" class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4 hidden">
+          <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+            <i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i>
+            <span>Bank Soal & Pemetaan Kurikulum</span>
+          </h2>
+          <p class="text-xs text-slate-600">
+            Daftar butir soal diagnostik tervalidasi yang tertanam di dalam aplikasi:
+          </p>
+
+          <div class="space-y-2 text-xs">
+            <details class="p-3 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer">
+              <summary class="font-bold text-slate-800">Level A: Unplugged (Fase A-B / Pemula C)</summary>
+              <div class="mt-2 pl-2 space-y-1.5 text-slate-600 border-l-2 border-blue-400">
+                <p>• <strong>A1 Decomposition:</strong> Merancang instruksi robot pembuat roti lapis.</p>
+                <p>• <strong>A2 Pattern Recognition:</strong> Analisis siklus lampu indikator robot.</p>
+                <p>• <strong>A3 Algorithmic Sequencing:</strong> Navigasi koordinat robot kurir (1,1) ke (3,2).</p>
+                <p>• <strong>A4 Debugging:</strong> Pelacakan bug urutan algoritma cuci tangan otomatis.</p>
+              </div>
+            </details>
+
+            <details open class="p-3 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer">
+              <summary class="font-bold text-slate-800">Level B: Plugged (Fase C-D / SD 5-6 & SMP)</summary>
+              <div class="mt-2 pl-2 space-y-1.5 text-slate-600 border-l-2 border-emerald-400">
+                <p>• <strong>B1 Variables & State:</strong> Pelacakan mutasi nilai skor dan bonus.</p>
+                <p>• <strong>B2 Conditionals & Logic:</strong> Evaluasi ekspresi logika konjungsi JIKA/DAN.</p>
+                <p>• <strong>B3 Loops & Efficiency:</strong> Perulangan terikat untuk menggambar persegi.</p>
+                <p>• <strong>B4 Code Debugging:</strong> Pelacakan dan koreksi infinite loop hitungan mundur.</p>
+              </div>
+            </details>
+
+            <details class="p-3 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer">
+              <summary class="font-bold text-slate-800">Rubrik 4 Kuadran & Intervensi Pedagogis</summary>
+              <div class="mt-2 pl-2 space-y-1.5 text-slate-600 border-l-2 border-amber-400">
+                <p>• <strong>Mastery (Q1):</strong> Proyek terbuka & tutor sebaya.</p>
+                <p>• <strong>Underconfident (Q2):</strong> Validasi proses berpikir & hilangkan batas waktu.</p>
+                <p>• <strong>Overconfident (Q3):</strong> Uji kasus batas (*edge cases*) & *trace table*.</p>
+                <p>• <strong>Struggling (Q4):</strong> *Micro-scaffolding* & aktivitas konkret Unplugged.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================================================= -->
+      <!-- PANEL KANAN (COL 6-12): VISUALISASI & LAPORAN      -->
+      <!-- ================================================= -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- KARTU VISUALISASI MATRIKS 4 KUADRAN (KANVAS GRAFIK) -->
+        <div class="no-print bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 gap-2">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <i data-lucide="scatter-chart" class="w-4 h-4 text-blue-600"></i>
+                <span>Visualisasi Matriks 4 Kuadran Psikometrik</span>
+              </h3>
+              <p class="text-xs text-slate-500">Pemetaan Skor Kemampuan Aktual ($X$) vs Skor Efikasi Diri ($Y$)</p>
+            </div>
+            
+            <!-- Badge Status Kuadran -->
+            <div id="quadrant-display-pill" class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <i data-lucide="award" class="w-3.5 h-3.5"></i>
+              <span id="quadrant-pill-text">KUADRAN 1: MASTERY</span>
+            </div>
+          </div>
+
+          <!-- Kanvas Render Grafik Kuadran -->
+          <div class="mt-4 flex flex-col items-center">
+            <div class="relative bg-white border border-slate-200 rounded-lg shadow-inner overflow-hidden p-2">
+              <canvas id="quadrantCanvas" width="360" height="360" class="block"></canvas>
+            </div>
+            <div class="flex items-center justify-center space-x-4 mt-3 text-[11px] text-slate-500 font-medium">
+              <span class="flex items-center space-x-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                <span>Q1 Mastery</span>
+              </span>
+              <span class="flex items-center space-x-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                <span>Q2 Underconfident</span>
+              </span>
+              <span class="flex items-center space-x-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>
+                <span>Q3 Overconfident</span>
+              </span>
+              <span class="flex items-center space-x-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                <span>Q4 Struggling</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- LEMBAR PRATINJAU DOKUMEN RESMI (A4 FORMAL INLINE EDITABLE) -->
+        <!-- ========================================================== -->
+        <div id="report-print-container" class="bg-white rounded-xl border border-slate-200 p-8 sm:p-10 shadow-sm space-y-6">
+          
+          <!-- Notifikasi Penyuntingan Langsung untuk Guru (No-Print) -->
+          <div class="no-print -mt-3 mb-3 p-3 rounded-lg bg-blue-50/70 border border-blue-200 flex items-center justify-between text-xs text-blue-800">
+            <span class="flex items-center space-x-1.5 font-medium">
+              <i data-lucide="edit-3" class="w-4 h-4 text-blue-600"></i>
+              <span>Seluruh teks narasi di bawah ini dapat diklik dan disunting langsung sebelum diekspor.</span>
+            </span>
+            <span class="text-[11px] text-blue-600 font-bold bg-white px-2 py-0.5 rounded border border-blue-200">Inline Editing Aktif</span>
+          </div>
+
+          <!-- KOP SURAT RESMI -->
+          <div class="border-b-2 border-slate-800 pb-4 text-center">
+            <h1 class="text-lg sm:text-xl font-bold uppercase tracking-wider text-slate-900">
+              LAPORAN EVALUASI DIAGNOSTIK PSIKOMETRIK
+            </h1>
+            <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wide mt-0.5">
+              BERPIKIR KOMPUTASIONAL & EFIKASI DIRI SISWA
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Berdasarkan Kerangka Capaian Pembelajaran Koding/Informatika & Dimensi Profil Lulusan
+            </p>
+          </div>
+
+          <!-- Tabel Metadata Siswa -->
+          <div class="grid grid-cols-2 gap-4 text-xs">
+            <div class="space-y-1">
+              <div class="flex"><span class="w-28 text-slate-500 font-medium">Nama Siswa:</span> <span id="rep-student-name" class="font-bold text-slate-900">Arkan Danendra</span></div>
+              <div class="flex"><span class="w-28 text-slate-500 font-medium">Fase / Kelas:</span> <span id="rep-student-grade" class="font-semibold text-slate-800">Fase C - Kelas 5 SD</span></div>
+              <div class="flex"><span class="w-28 text-slate-500 font-medium">Paket Asesmen:</span> <span id="rep-assessment-level" class="font-semibold text-slate-800">Level B (Plugged - Algoritma)</span></div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex"><span class="w-32 text-slate-500 font-medium">Tanggal Asesmen:</span> <span id="rep-date" class="font-semibold text-slate-800">26 Oktober 2026</span></div>
+              <div class="flex"><span class="w-32 text-slate-500 font-medium">Indeks Kalibrasi ($I_{cal}$):</span> <span id="rep-ical-badge" class="font-bold text-slate-900">+7.0 (Akurat)</span></div>
+              <div class="flex"><span class="w-32 text-slate-500 font-medium">Kuadran Diagnostik:</span> <span id="rep-quadrant-badge" class="font-bold text-emerald-700">Q1: MASTERY</span></div>
+            </div>
+          </div>
+
+          <!-- Tabel Metrik Skor Dua Konstruk -->
+          <div class="border border-slate-200 rounded-lg overflow-hidden">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Konstruk Pengukuran</th>
+                  <th class="py-2.5 px-3">Skor Numerik</th>
+                  <th class="py-2.5 px-3">Kategori Psikometrik</th>
+                  <th class="py-2.5 px-3">Landasan Teoretis</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr>
+                  <td class="py-2.5 px-3 font-semibold text-slate-800">Kemampuan Aktual ($S_{skill}$)</td>
+                  <td id="rep-table-skill" class="py-2.5 px-3 font-bold text-slate-900">75.0 / 100</td>
+                  <td class="py-2.5 px-3 text-emerald-700 font-medium">Penguasaan Tinggi (&ge; 70)</td>
+                  <td class="py-2.5 px-3 text-slate-500">Brennan & Resnick (2012)</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 font-semibold text-slate-800">Efikasi Diri ($S_{efficacy}$)</td>
+                  <td id="rep-table-eff" class="py-2.5 px-3 font-bold text-blue-700">82.0 / 100</td>
+                  <td class="py-2.5 px-3 text-blue-700 font-medium">Keyakinan Kuat (&ge; 70)</td>
+                  <td class="py-2.5 px-3 text-slate-500">Bandura (1997); Kukul (2019)</td>
+                </tr>
+                <tr class="bg-slate-50/50">
+                  <td class="py-2.5 px-3 font-semibold text-slate-800">Kalibrasi Metakognitif ($I_{cal}$)</td>
+                  <td id="rep-table-ical" class="py-2.5 px-3 font-bold text-slate-900">+7.0</td>
+                  <td class="py-2.5 px-3 text-slate-800 font-semibold">Terkalibrasi Akurat (&plusmn;15)</td>
+                  <td class="py-2.5 px-3 text-slate-500">Schraw (2009)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- BAGIAN 1: RINGKASAN EKSEKUTIF -->
+          <div class="space-y-1.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+              1. Ringkasan Eksekutif & Diagnosis Kuadran
+            </h3>
+            <p id="rep-text-summary" contenteditable="true" class="text-xs text-slate-700 leading-relaxed text-justify p-1">
+              Siswa menunjukkan profil penalaran komputasional yang sangat solid dengan penguasaan seimbang pada domain logika algoritma dan dekomposisi masalah. Tingkat efikasi diri siswa berada pada kategori tinggi dan selaras secara akurat dengan skor kemampuan objektifnya, menempatkan siswa pada Kuadran 1: Mastery (Well-Calibrated). Siswa memiliki pemantauan metakognitif yang matang serta siap menghadapi persoalan logika dengan tingkat kerumitan yang lebih tinggi.
+            </p>
+          </div>
+
+          <!-- BAGIAN 2: EVALUASI DOMAIN COMPUTATIONAL THINKING -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+              2. Evaluasi Domain Berpikir Komputasional (CT)
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div class="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <span class="font-bold text-slate-800 block mb-1">Kekuatan Utama:</span>
+                <ul id="rep-list-strengths" contenteditable="true" class="list-disc list-inside space-y-1 text-slate-700 p-1">
+                  <li>Sangat unggul dalam mengenali pola berulang pada algoritma dan menyederhanakan sekuens instruksi.</li>
+                  <li>Mampu memodelkan perubahan status variabel secara akurat pada struktur logika pseudocode.</li>
+                </ul>
+              </div>
+              <div class="p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <span class="font-bold text-slate-800 block mb-1">Area Penguatan:</span>
+                <ul id="rep-list-gaps" contenteditable="true" class="list-disc list-inside space-y-1 text-slate-700 p-1">
+                  <li>Perlu penguatan ketelitian dalam melacak kondisi penghentian perulangan (*loop termination*) untuk menghindari infinite loop.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- BAGIAN 3: CAPAIAN DIMENSI PROFIL LULUSAN -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+              3. Evaluasi Ketercapaian Dimensi Profil Lulusan
+            </h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex flex-col sm:flex-row sm:items-baseline gap-1">
+                <span class="font-bold text-slate-800 w-36 shrink-0">• Penalaran Kritis:</span>
+                <span id="rep-text-kritis" contenteditable="true" class="text-slate-700 leading-relaxed p-1 flex-1">
+                  Siswa mampu mengevaluasi kondisi Boolean majemuk secara logis serta membuktikan kebenaran hipotesis kode melalui pengujian sistematis.
+                </span>
+              </div>
+              <div class="flex flex-col sm:flex-row sm:items-baseline gap-1">
+                <span class="font-bold text-slate-800 w-36 shrink-0">• Kemandirian:</span>
+                <span id="rep-text-mandiri" contenteditable="true" class="text-slate-700 leading-relaxed p-1 flex-1">
+                  Menunjukkan regulasi diri yang prima, tidak mudah cemas menghadapi kode yang tidak berjalan, dan memiliki persistensi tinggi saat menelusuri bug.
+                </span>
+              </div>
+              <div class="flex flex-col sm:flex-row sm:items-baseline gap-1">
+                <span class="font-bold text-slate-800 w-36 shrink-0">• Kreativitas:</span>
+                <span id="rep-text-kreatif" contenteditable="true" class="text-slate-700 leading-relaxed p-1 flex-1">
+                  Mampu mengabstraksi sekuens perintah yang panjang menjadi struktur perulangan yang ringkas, rapi, dan efisien.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BAGIAN 4: REKOMENDASI INTERVENSI GURU -->
+          <div class="space-y-1.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+              4. Rekomendasi Intervensi Pedagogis (Aksi Guru)
+            </h3>
+            <ol id="rep-list-recommendations" contenteditable="true" class="list-decimal list-inside space-y-1 text-xs text-slate-700 p-1">
+              <li>Berikan tantangan proyek terbuka (*open-ended coding project*) yang melibatkan struktur data dan algoritma modular.</li>
+              <li>Libatkan siswa sebagai tutor sebaya (*peer mentor*) untuk membantu rekannya dalam sesi penelusuran kesalahan program.</li>
+              <li>Persiapkan siswa untuk melangkah ke materi Level B+ (Algoritma Lanjut berbasis Teks).</li>
+            </ol>
+          </div>
+
+          <!-- BAGIAN 5: PESAN MOTIVATIF SISWA -->
+          <div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
+            <h4 class="text-xs font-bold text-slate-900">Umpan Balik Reflektif untuk Siswa:</h4>
+            <p id="rep-text-studentmsg" contenteditable="true" class="text-xs text-slate-700 italic leading-relaxed p-1">
+              "Kamu telah menunjukkan dedikasi dan pemikiran komputasi yang luar biasa! Teruslah mengasah rasa ingin tahu dan jangan ragu untuk bereksperimen dengan ide-ide pemrograman yang lebih menantang."
+            </p>
+          </div>
+
+          <!-- KOLOM TANDA TANGAN RESMI -->
+          <div class="pt-8 grid grid-cols-2 text-xs">
+            <div>
+              <p class="text-slate-500">Mengetahui,</p>
+              <p class="font-semibold text-slate-800">Orang Tua / Wali Siswa</p>
+              <div class="h-16"></div>
+              <p class="text-slate-400 border-t border-slate-300 w-48 pt-1">( ........................................ )</p>
+            </div>
+            <div class="text-right">
+              <p class="text-slate-500">Ditetapkan di Tempat,</p>
+              <p class="font-semibold text-slate-800">Guru Fasilitator Informatika</p>
+              <div class="h-16"></div>
+              <p class="text-slate-900 font-bold border-t border-slate-300 w-48 ml-auto pt-1">Ibu Ratna, S.Kom.</p>
+              <p class="text-[11px] text-slate-500">NIP. 19850412 201001 2 015</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 4. LOGIKA JAVASCRIPT & ENGINE DETERMINISTIK-->
+  <!-- ========================================== -->
+  <script>
+    /* ===================================================
+       DATA AWAL BAKU (SEED DATA DARI DOKUMEN SPESIFIKASI)
+       =================================================== */
+
+    // 1. Skala Efikasi Diri Baku (12 Butir Likert)
+    const SURVEY_ITEMS = [
+      { id: 1, subscale: 'Penalaran Algoritmik', text: 'Saya yakin dapat memecah masalah yang rumit menjadi langkah-langkah kecil yang lebih mudah diselesaikan (Decomposition).' },
+      { id: 2, subscale: 'Penalaran Algoritmik', text: 'Saya yakin dapat menemukan pola atau kemiripan dari beberapa permasalahan untuk mempercepat pencarian solusi (Pattern Recognition).' },
+      { id: 3, subscale: 'Penalaran Algoritmik', text: 'Saya yakin dapat menyusun urutan instruksi secara runtut dari awal hingga akhir agar sistem atau robot dapat menjalankan perintah dengan tepat (Algorithmic Sequencing).' },
+      { id: 4, subscale: 'Ketekunan Pelacakan Kesalahan', text: 'Ketika susunan instruksi atau kode yang saya buat tidak berjalan sesuai harapan, saya yakin dapat menemukan letak kesalahannya sendiri.' },
+      { id: 5, subscale: 'Ketekunan Pelacakan Kesalahan', text: 'Saya tidak mudah menyerah dan yakin dapat memperbaiki kesalahan logika (bug) meskipun harus mencoba beberapa kali.' },
+      { id: 6, subscale: 'Ketekunan Pelacakan Kesalahan', text: 'Saya yakin dapat menguji apakah solusi algoritma yang saya susun sudah benar-benar bebas dari kesalahan.' },
+      { id: 7, subscale: 'Kemandirian Pemecahan Masalah', text: 'Saya yakin dapat menyelesaikan tantangan logika atau pemrograman baru meskipun belum pernah melihat contoh yang persis sama sebelumnya.' },
+      { id: 8, subscale: 'Kemandirian Pemecahan Masalah', text: 'Saya yakin dapat memahami petunjuk persoalan logika dan mengerjakannya secara mandiri tanpa harus selalu bergantung pada bantuan orang lain.' },
+      { id: 9, subscale: 'Kemandirian Pemecahan Masalah', text: 'Saya yakin dapat menjelaskan alasan logis di balik langkah-langkah solusi yang saya buat kepada guru atau teman.' },
+      { id: 10, subscale: 'Regulasi Diri pada Tugas Kompleks', text: 'Saya tetap tenang dan fokus berpikir ketika menghadapi persoalan logika atau blok kode yang terlihat panjang.' },
+      { id: 11, subscale: 'Regulasi Diri pada Tugas Kompleks', text: 'Saya yakin dapat memilih cara yang paling efisien (paling ringkas dan tepat) dari beberapa alternatif solusi yang ada.' },
+      { id: 12, subscale: 'Regulasi Diri pada Tugas Kompleks', text: 'Saya yakin kemampuan saya dalam menyusun logika pemrograman akan terus berkembang melalui latihan yang konsisten.' }
+    ];
+
+    // 2. Bank Soal Diagnostik Level A (Unplugged) & Level B (Plugged)
+    const QUESTION_BANK = {
+      A: [
+        {
+          code: 'A1',
+          domain: 'Decomposition',
+          competency: 'Menguraikan proses kompleks menjadi sub-proses sekuensial yang tidak tumpang tindih.',
+          context: 'Rani ingin merancang instruksi untuk robot pembuat roti lapis otomatis. Sebelum menulis instruksi detail, ia harus memecah tugas besar "Membuat Roti Lapis" menjadi tahapan-tahapan kecil yang logis.',
+          question: 'Manakah pembagian sub-tugas yang paling runtut dan valid di bawah ini?',
+          options: [
+            { key: 'A', text: '(1) Sajikan roti, (2) Siapkan bahan, (3) Oleskan selai, (4) Tutup roti.' },
+            { key: 'B', text: '(1) Siapkan dua lembar roti dan selai, (2) Oleskan selai pada permukaan roti pertama, (3) Tangkupkan roti kedua di atasnya, (4) Letakkan di piring saji.' },
+            { key: 'C', text: '(1) Oleskan selai di atas piring, (2) Ambil dua lembar roti, (3) Masukkan ke kotak bekal.' },
+            { key: 'D', text: '(1) Siapkan piring saji, (2) Tangkupkan kedua roti, (3) Buka tutup botol selai.' }
+          ],
+          answer: 'B'
+        },
+        {
+          code: 'A2',
+          domain: 'Pattern Recognition',
+          competency: 'Mengidentifikasi siklus berulang berukuran 4 elemen untuk memprediksi keadaan pada indeks ke-n.',
+          context: 'Sebuah lampu indikator pada panel robot menyala secara bergantian mengikuti pola siklus berikut:\nMerah -> Biru -> Biru -> Hijau -> Merah -> Biru -> Biru -> Hijau -> Merah -> ...',
+          question: 'Jika pola siklus tersebut terus berulang secara konsisten, warna apakah yang akan menyala pada urutan ke-11 dan ke-12?',
+          options: [
+            { key: 'A', text: 'Merah dan Biru' },
+            { key: 'B', text: 'Biru dan Hijau' },
+            { key: 'C', text: 'Biru dan Biru' },
+            { key: 'D', text: 'Hijau dan Merah' }
+          ],
+          answer: 'B'
+        },
+        {
+          code: 'A3',
+          domain: 'Algorithmic Sequencing',
+          competency: 'Melakukan penelusuran langkah spasial berdasarkan orientasi arah dan perpindahan koordinat.',
+          context: 'Sebuah robot kurir berada di petak koordinat (1,1) pada lantai berukuran 4x4 dan sedang menghadap ke arah TIMUR (Kanan). Titik paket berada di koordinat (3,2) (dua petak ke kanan, satu petak ke atas/utara). Instruksi MAJU menggerakkan robot 1 petak sesuai arah hadapnya.',
+          question: 'Rangkaian instruksi manakah yang membawa robot tepat berhenti di petak (3,2)?',
+          options: [
+            { key: 'A', text: 'MAJU -> MAJU -> HADAP KIRI (UTARA) -> MAJU' },
+            { key: 'B', text: 'MAJU -> HADAP KANAN (SELATAN) -> MAJU -> MAJU' },
+            { key: 'C', text: 'HADAP KIRI (UTARA) -> MAJU -> MAJU -> MAJU' },
+            { key: 'D', text: 'MAJU -> MAJU -> MAJU -> HADAP KIRI (UTARA)' }
+          ],
+          answer: 'A'
+        },
+        {
+          code: 'A4',
+          domain: 'Debugging',
+          competency: 'Mendeteksi anomali urutan prasyarat dan merumuskan koreksi yang tepat.',
+          context: 'Perhatikan algoritma mencuci tangan otomatis yang disusun oleh Budi:\n1. Buka keran air\n2. Basahi kedua tangan\n3. Keringkan tangan menggunakan handuk bersih\n4. Gosok seluruh permukaan tangan dengan sabun selama 20 detik\n5. Bilas tangan dengan air mengalir hingga bersih\n6. Tutup keran air',
+          question: 'Algoritma di atas mengandung satu kesalahan logika (bug). Perbaikan manakah yang paling tepat?',
+          options: [
+            { key: 'A', text: 'Langkah 1 seharusnya diletakkan di urutan paling akhir.' },
+            { key: 'B', text: 'Langkah 3 seharusnya dipindahkan ke urutan paling akhir setelah Langkah 6.' },
+            { key: 'C', text: 'Langkah 4 seharusnya dijalankan sebelum Langkah 1.' },
+            { key: 'D', text: 'Langkah 5 tidak diperlukan dan harus dihapus.' }
+          ],
+          answer: 'B'
+        }
+      ],
+      B: [
+        {
+          code: 'B1',
+          domain: 'Variables & State Mutation',
+          competency: 'Melacak perubahan nilai variabel secara sekuensial.',
+          context: 'Perhatikan potongan pseudocode berikut ini:\n\nskor = 10\nbonus = 5\nskor = skor + bonus\nskor = skor - 3',
+          question: 'Berapakah nilai akhir yang tersimpan di dalam variabel skor setelah seluruh baris kode dieksekusi?',
+          options: [
+            { key: 'A', text: '10' },
+            { key: 'B', text: '15' },
+            { key: 'C', text: '12' },
+            { key: 'D', text: '8' }
+          ],
+          answer: 'C'
+        },
+        {
+          code: 'B2',
+          domain: 'Conditionals & Boolean Logic',
+          competency: 'Mengevaluasi ekspresi logika majemuk menggunakan operator konjungsi DAN (AND).',
+          context: 'Sistem penyiram tanaman otomatis bekerja dengan aturan kode berikut:\n\nJIKA (kelembapan < 40) DAN (status_hujan == SALAH) MAKA:\n    pompa = "AKTIF"\nSELAIN ITU:\n    pompa = "NONAKTIF"',
+          question: 'Apabila sensor membaca kelembapan = 30 dan status_hujan = BENAR, apakah nilai variabel pompa?',
+          options: [
+            { key: 'A', text: '"AKTIF"' },
+            { key: 'B', text: '"NONAKTIF"' },
+            { key: 'C', text: '"ERROR"' },
+            { key: 'D', text: '"AKTIF SEBENTAR"' }
+          ],
+          answer: 'B'
+        },
+        {
+          code: 'B3',
+          domain: 'Loops & Efficiency',
+          competency: 'Mengabstraksi sekuens instruksi repetitif ke dalam perulangan terbatas (bounded loop).',
+          context: 'Untuk menggambar persegi, sebuah pena robot menjalankan instruksi berikut:\nGarisMaju(50) -> PutarKanan(90) -> GarisMaju(50) -> PutarKanan(90) -> GarisMaju(50) -> PutarKanan(90) -> GarisMaju(50) -> PutarKanan(90)',
+          question: 'Struktur blok perulangan manakah yang menghasilkan gambar yang identik namun paling efisien?',
+          options: [
+            { key: 'A', text: 'ULANGI 2 KALI { GarisMaju(50); PutarKanan(90); }' },
+            { key: 'B', text: 'ULANGI 4 KALI { GarisMaju(50); PutarKanan(90); }' },
+            { key: 'C', text: 'ULANGI 4 KALI { GarisMaju(50); } -> PutarKanan(90)' },
+            { key: 'D', text: 'ULANGI SELAMANYA { GarisMaju(50); PutarKanan(90); }' }
+          ],
+          answer: 'B'
+        },
+        {
+          code: 'B4',
+          domain: 'Code Debugging',
+          competency: 'Menganalisis kondisi terminasi perulangan dan memperbaiki kesalahan pembaruan variabel pencacah.',
+          context: 'Program berikut dirancang untuk menampilkan hitungan mundur dari 5 hingga 1, lalu berhenti:\n\nangka = 5\nSELAMA (angka > 0) LAKUKAN:\n    Tampilkan(angka)\n    angka = angka + 1',
+          question: 'Saat dijalankan, program mengalami perulangan tak terbatas (infinite loop). Apa penyebab dan perbaikannya?',
+          options: [
+            { key: 'A', text: 'Nilai awal angka seharusnya diatur menjadi 0.' },
+            { key: 'B', text: 'Kondisi angka > 0 seharusnya diganti menjadi angka == 5.' },
+            { key: 'C', text: 'Baris angka = angka + 1 membuat nilai terus bertambah; seharusnya diubah menjadi angka = angka - 1.' },
+            { key: 'D', text: 'Baris Tampilkan(angka) harus dihapus dari dalam blok perulangan.' }
+          ],
+          answer: 'C'
+        }
+      ]
+    };
+
+    /* ===================================================
+       STATE APLIKASI TERPADU
+       =================================================== */
+    let appState = {
+      role: 'admin', // 'student' | 'admin'
+      
+      // Sesi Siswa
+      student: {
+        name: 'Arkan Danendra',
+        grade: 'Fase C - Kelas 5 SD',
+        level: 'B',
+        surveyScores: new Array(12).fill(4),
+        quizIndex: 0,
+        quizAnswers: {}, // { A1: { chosen: 'B', confidence: 4, correct: true } }
+        calculated: null
+      },
+
+      // Sesi Admin / Guru
+      admin: {
+        activeTab: 'calc',
+        name: 'Arkan Danendra',
+        grade: 'Fase C - Kelas 5 SD',
+        level: 'B',
+        domainScores: {
+          decomp: 75,
+          pattern: 100,
+          logic: 75,
+          debug: 50
+        },
+        efficacyRating: 4.1, // skala 1-5
+        sSkill: 75.0,
+        sEff: 82.0,
+        iCal: 7.0,
+        quadrant: 'MASTERY',
+        reportData: null
+      }
+    };
+
+    /* ===================================================
+       FUNGSI PSIKOMETRIK & KALKULASI DETERMINISTIK
+       =================================================== */
+
+    // 1. Hitung Skor Kemampuan Aktual (0 - 100)
+    function computeSkillScore(correctCount, totalCount) {
+      if (totalCount === 0) return 0;
+      return (correctCount / totalCount) * 100;
+    }
+
+    // 2. Hitung Skor Efikasi Diri dari Slider/Angket (0 - 100)
+    function computeEfficacyScore(avgLikert1to5) {
+      return (avgLikert1to5 / 5) * 100;
+    }
+
+    // 3. Hitung Indeks Kalibrasi Metakognitif (-100 hingga +100)
+    function computeCalibrationIndex(sEff, sSkill) {
+      return sEff - sSkill;
+    }
+
+    // 4. Klasifikasi 4 Kuadran
+    function classifyQuadrant(sSkill, sEff, iCal) {
+      if (sSkill >= 70 && sEff >= 70) {
+        return 'MASTERY';
+      } else if (sSkill >= 70 && (sEff < 70 || iCal < -15)) {
+        return 'UNDERCONFIDENT';
+      } else if (sSkill < 70 && (sEff >= 70 || iCal > 15)) {
+        return 'OVERCONFIDENT';
+      } else {
+        return 'STRUGGLING';
+      }
+    }
+
+    // 5. Interpretasi Status Kalibrasi
+    function getCalibrationStatusText(iCal) {
+      if (iCal >= -15 && iCal <= 15) {
+        return { text: 'Terkalibrasi Akurat (Well-Calibrated)', color: 'text-emerald-700' };
+      } else if (iCal > 15) {
+        return { text: 'Bias Keyakinan Berlebih (Overconfident)', color: 'text-orange-700' };
+      } else {
+        return { text: 'Bias Keraguan Diri (Underconfident)', color: 'text-amber-700' };
+      }
+    }
+
+    /* ===================================================
+       MESIN NARASI DETERMINISTIK LOKAL (OFFLINE FALLBACK)
+       =================================================== */
+    function generateDeterministicReport(params) {
+      const { name, level, sSkill, sEff, iCal, quadrant, domainScores } = params;
+      const calInfo = getCalibrationStatusText(iCal);
+
+      let summary = "";
+      let quadDesc = "";
+      let strengths = [];
+      let gaps = [];
+      let criticalThinking = "";
+      let autonomy = "";
+      let creativity = "";
+      let recommendations = [];
+      let studentFeedback = "";
+
+      if (quadrant === 'MASTERY') {
+        summary = `${name} menunjukkan profil berpikir komputasional yang sangat unggul dengan penguasaan konsep yang seimbang. Tingkat keyakinan diri siswa terkalibrasi secara akurat (${iCal >= 0 ? '+' : ''}${iCal.toFixed(1)}) terhadap kemampuan faktualnya, menempatkannya pada Kuadran 1: Mastery. Siswa memiliki kesadaran metakognitif yang matang serta siap menerima tantangan komputasi terbuka.`;
+        quadDesc = `Siswa memiliki skor kemampuan aktual (${sSkill.toFixed(1)}) dan efikasi diri (${sEff.toFixed(1)}%) yang sama-sama melampaui ambang batas 70 poin. Dinamika ini mencerminkan kompetensi nyata yang diiringi keyakinan diri objektif tanpa ilusi kompetensi.`;
+        strengths = [
+          `Penguasaan logika tingkat tinggi pada domain ${sSkill >= 80 ? 'Pattern Recognition & Sequencing' : 'Dekomposisi Logika'}.`,
+          `Mampu memvalidasi kebenaran alur program secara sistematis sebelum mengambil kesimpulan.`
+        ];
+        gaps = [
+          `Pertahankan ketelitian pada kasus tepi (edge cases) dan optimasi efisiensi algoritma tingkat lanjut.`
+        ];
+        criticalThinking = `Mampu menganalisis alur logika percabangan dan perulangan secara deduktif, serta mendeteksi bug berdasarkan bukti empiris.`;
+        autonomy = `Menunjukkan regulasi diri yang sangat kokoh, ketekunan tinggi, dan keyakinan mandiri saat menghadapi permasalahan komputasional baru.`;
+        creativity = `Mampu menyederhanakan rangkaian instruksi yang repetitif menjadi struktur algoritma yang efisien dan elegan.`;
+        recommendations = [
+          `Berikan proyek pemrograman terbuka (open-ended project) berbasis pemecahan masalah dunia nyata.`,
+          `Fasilitasi siswa sebagai tutor sebaya (peer mentor) untuk melatih kemampuan artikulasi logika kepada teman sekelas.`,
+          `Tingkatkan tantangan asesmen ke materi algoritma tekstual / Level B+ (Modular Programming).`
+        ];
+        studentFeedback = `Kerja yang sangat luar biasa, ${name}! Kamu tidak hanya memahami logika koding dengan sangat baik, tetapi juga memiliki rasa percaya diri yang matang. Teruslah bereksplorasi dan ciptakan karya teknologi yang bermanfaat!`;
+      } else if (quadrant === 'UNDERCONFIDENT') {
+        summary = `${name} memiliki potensi dan kemampuan berpikir komputasional yang tajam (Skor Aktual: ${sSkill.toFixed(1)}), namun mengalami bias keraguan diri (Indeks Kalibrasi: ${iCal.toFixed(1)}). Siswa berada pada Kuadran 2: Underconfident, di mana ia cenderung memandang rendah kemampuannya sendiri dan merasa ragu meskipun jawabannya tepat.`;
+        quadDesc = `Terjadi kesenjangan negatif yang signifikan antara performa kognitif aktual yang tinggi dan skor efikasi diri yang rendah. Kondisi ini mencerminkan sindrom keraguan diri (impostor phenomenon) dan kekhawatiran berlebih akan membuat kesalahan.`;
+        strengths = [
+          `Ketelitian tinggi dalam menelusuri langkah algoritma dan mendeteksi kesalahan sintaksis/logika.`,
+          `Memiliki fondasi pemecahan masalah yang kuat saat diberikan petunjuk terstruktur.`
+        ];
+        gaps = [
+          `Tingkat keyakinan subjektif masih rendah, sering ragu dalam mengonfirmasi bahwa solusinya sudah benar.`
+        ];
+        criticalThinking = `Mampu melakukan penelusuran logika secara hati-hati, namun terkadang membutuhkan konfirmasi eksternal untuk meyakini hasil analisisnya.`;
+        autonomy = `Memerlukan dukungan afektif untuk membangun kemandirian pengambilan keputusan dan mengurangi rasa cemas saat mencoba solusi baru.`;
+        creativity = `Mampu memetakan pola secara cermat, namun enggan mencoba alternatif cara yang tidak konvensional karena takut salah.`;
+        recommendations = [
+          `Berikan umpan balik yang memvalidasi ketepatan proses berpikir logis siswa, bukan sekadar memuji hasil akhirnya.`,
+          `Hilangkan tekanan batasan waktu (untimed practice) agar siswa merasa tenang saat menyusun algoritma.`,
+          `Perbanyak pemberian apresiasi eksplisit setiap kali siswa berhasil menuntaskan proses debugging secara mandiri.`
+        ];
+        studentFeedback = `Kamu sebenarnya memiliki pemikiran logika yang sangat hebat, ${name}! Jawaban-jawabanmu membuktikan bahwa kamu mampu menyelesaikan tantangan yang rumit. Percayalah pada kemampuan dirimu sendiri!`;
+      } else if (quadrant === 'OVERCONFIDENT') {
+        summary = `${name} menunjukkan antusiasme belajar koding yang sangat tinggi dengan skor keyakinan diri mencapai ${sEff.toFixed(1)}%, namun pemahaman konsep dasarnya masih memerlukan penguatan (Skor Aktual: ${sSkill.toFixed(1)}). Berada pada Kuadran 3: Overconfident dengan bias positif (+${iCal.toFixed(1)}), siswa cenderung terburu-buru mengambil kesimpulan tanpa melakukan verifikasi langkah demi langkah.`;
+        quadDesc = `Keyakinan diri melampaui kemampuan aktual secara substansial. Ini merupakan gejala ilusi kompetensi (illusion of competence) di mana rasa percaya diri yang tinggi belum ditopang oleh penguasaan logika yang matang.`;
+        strengths = [
+          `Memiliki keberanian tinggi dan sikap optimis dalam mencoba tantangan koding tanpa rasa takut.`,
+          `Cepat mengambil inisiatif dalam menentukan langkah penyelesaian persoalan.`
+        ];
+        gaps = [
+          `Kurang teliti dalam menguji kondisi logika bersyarat dan sering melewatkan pengecekan bug sebelum mengonfirmasi hasil.`
+        ];
+        criticalThinking = `Masih cenderung melompat ke kesimpulan berdasarkan intuisi sesaat, membutuhkan pembiasaan teknik penelusuran bertahap (trace table).`;
+        autonomy = `Rasa percaya diri sangat baik, namun memerlukan bimbingan metakognitif agar dapat mengenali kapan saatnya meminta bantuan atau memeriksa ulang.`;
+        creativity = `Memiliki banyak gagasan solusi, namun perlu diarahkan untuk mempertimbangkan kebenaran dan efisiensi langkah secara sistematis.`;
+        recommendations = [
+          `Jaga antusiasme dan rasa percaya diri siswa agar tidak patah, namun ajarkan teknik pengujian tabel variabel (variable trace table).`,
+          `Terapkan latihan dengan kasus batas (edge-case challenges) agar siswa secara mandiri menemukan celah dalam algoritmanya.`,
+          `Latih kebiasaan membaca ulang dan menjalankan algoritma di atas kertas (dry-run) sebelum dijalankan pada sistem.`
+        ];
+        studentFeedback = `Semangat dan keberanianmu luar biasa, ${name}! Kamu punya energi positif yang sangat penting untuk menjadi programmer hebat. Langkah berikutnya adalah melatih ketelitianmu untuk memeriksa kembali setiap kode sebelum selesai!`;
+      } else {
+        // STRUGGLING
+        summary = `${name} sedang berada pada tahap awal pembentukan fondasi berpikir komputasional (Skor Aktual: ${sSkill.toFixed(1)}) dan menyadari tantangan yang dihadapinya dengan skor keyakinan diri ${sEff.toFixed(1)}%. Berada pada Kuadran 4: Struggling, siswa membutuhkan bimbingan bertahap (scaffolding) agar tidak mengalami kecemasan belajar koding (coding anxiety).`;
+        quadDesc = `Baik performa aktual maupun keyakinan diri berada di bawah ambang batas penguasaan 70 poin. Kondisi ini memerlukan intervensi pedagogis berbasis pengalaman berhasil berskala mikro (mastery experiences) untuk menumbuhkan efikasi diri sekaligus kompetensi kognitif.`;
+        strengths = [
+          `Menunjukkan kesadaran yang jujur mengenai hal-hal yang belum dipahami (kesadaran metakognitif awal).`,
+          `Memiliki potensi besar untuk berkembang melalui pendekatan instruksional yang lebih konkret.`
+        ];
+        gaps = [
+          `Konsep dasar dekomposisi masalah, alur instruksi sekuensial, dan pemahaman logika variabel masih rapuh.`
+        ];
+        criticalThinking = `Membutuhkan latihan penelusuran hubungan sebab-akibat sederhana melalui analogi benda nyata dan teka-teki visual.`;
+        autonomy = `Sangat membutuhkan pendampingan terstruktur dan kehadiran guru untuk memberikan rasa aman saat menemui jalan buntu.`;
+        creativity = `Perlu distimulasi dengan aktivitas pengenalan pola gambar konkret sebelum berpindah ke algoritma simbolik.`;
+        recommendations = [
+          `Turunkan beban kognitif dengan mengalihkan aktivitas ke modul Level A Unplugged (permainan logika fisik tanpa komputer).`,
+          `Terapkan micro-scaffolding: pecah tugas koding menjadi langkah-langkah sangat kecil yang menjamin keberhasilan di awal.`,
+          `Ciptakan iklim belajar yang ramah kesalahan (mistake-friendly environment) agar siswa tidak merasa takut untuk mencoba.`
+        ];
+        studentFeedback = `Setiap ahli koding selalu memulai dari langkah pertama, ${name}. Kamu sudah berusaha dengan sangat baik hari ini! Dengan terus berlatih sedikit demi sedikit setiap hari, kamu pasti akan semakin mahir dan percaya diri!`;
+      }
+
+      return {
+        ringkasan_eksekutif: summary,
+        analisis_kuadran: {
+          kode_kuadran: quadrant,
+          label_kuadran: `KUADRAN ${quadrant === 'MASTERY' ? '1: MASTERY' : quadrant === 'UNDERCONFIDENT' ? '2: UNDERCONFIDENT' : quadrant === 'OVERCONFIDENT' ? '3: OVERCONFIDENT' : '4: STRUGGLING'}`,
+          interpretasi_psikometrik: quadDesc
+        },
+        evaluasi_domain_ct: {
+          kekuatan_utama: strengths,
+          area_penguatan: gaps
+        },
+        capaian_dimensi_profil_lulusan: {
+          penalaran_kritis: criticalThinking,
+          kemandirian: autonomy,
+          kreativitas: creativity
+        },
+        rekomendasi_intervensi_guru: recommendations,
+        pesan_umpan_balik_siswa: studentFeedback
+      };
+    }
+
+    /* ===================================================
+       INTEGRASI AI REST API (GEMINI API DENGAN FALLBACK)
+       =================================================== */
+    const SYSTEM_PROMPT = `Anda adalah Pakar Psikometrik Pendidikan Komputasi dan Asesmen Berpikir Komputasional (Computational Thinking). Tugas Anda adalah menganalisis data JSON hasil asesmen kemampuan koding (Level A Unplugged / Level B Plugged) dan skala Efikasi Diri siswa, kemudian menghasilkan laporan diagnostik resmi yang ilmiah, objektif, dan memberdayakan.
+
+PRINSIP KEILMUAN WAJIB:
+1. Bedakan secara tegas antara Kemampuan Aktual (skor tes objektif) dan Efikasi Diri (keyakinan subjektif berdasarkan teori Albert Bandura).
+2. Gunakan Indeks Kalibrasi Metakognitif (Schraw, 2009) untuk menjelaskan posisi siswa pada salah satu dari 4 kuadran: Mastery, Underconfident, Overconfident, atau Struggling.
+3. Evaluasi kekuatan dan celah keterampilan berdasarkan 4 domain Computational Thinking: Decomposition, Pattern Recognition, Algorithmic Sequencing/Logic, dan Debugging.
+4. Petakan capaian siswa secara eksplisit ke dalam Dimensi Profil Lulusan: Penalaran Kritis, Kemandirian, dan Kreativitas. DILARANG KERAS menggunakan istilah lama yang sudah tidak berlaku.
+5. Gunakan bahasa Indonesia formal-edukatif yang jernih, empatik, dan bebas dari karakter emoji.
+
+FORMAT OUTPUT WAJIB (PURE JSON):
+Kembalikan respons HANYA dalam format objek JSON valid dengan skema:
+{
+  "ringkasan_eksekutif": "Paragraf analisis komprehensif (3-4 kalimat) mengenai profil kemampuan koding aktual, tingkat efikasi diri, dan akurasi kalibrasi metakognitif siswa.",
+  "analisis_kuadran": {
+    "kode_kuadran": "MASTERY | UNDERCONFIDENT | OVERCONFIDENT | STRUGGLING",
+    "label_kuadran": "Nama Kuadran Diagnostik",
+    "interpretasi_psikometrik": "Penjelasan ilmiah mengenai dinamika antara skor kemampuan aktual dan tingkat keyakinan diri siswa."
+  },
+  "evaluasi_domain_ct": {
+    "kekuatan_utama": ["Analisis spesifik domain CT terbaik"],
+    "area_penguatan": ["Analisis domain CT yang butuh penguatan"]
+  },
+  "capaian_dimensi_profil_lulusan": {
+    "penalaran_kritis": "Evaluasi penalaran kritis",
+    "kemandirian": "Evaluasi kemandirian",
+    "kreativitas": "Evaluasi kreativitas"
+  },
+  "rekomendasi_intervensi_guru": [
+    "Rekomendasi 1",
+    "Rekomendasi 2",
+    "Rekomendasi 3"
+  ],
+  "pesan_umpan_balik_siswa": "Pesan motivatif untuk siswa"
+}`;
+
+    async function callGeminiOrFallback(studentData) {
+      // Ambil API Key dari variabel lingkungan runtime jika ada
+      const apiKey = window.GEMINI_API_KEY || (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) || null;
+      
+      if (!apiKey || !navigator.onLine) {
+        console.log('[EfiKoding] Menggunakan Local Deterministic Fallback Engine (Luring / Otomatis).');
+        return generateDeterministicReport(studentData);
+      }
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const userPrompt = `Analisis data asesmen psikometrik siswa berikut:\n${JSON.stringify(studentData, null, 2)}`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              { role: 'user', parts: [{ text: SYSTEM_PROMPT + '\n\n' + userPrompt }] }
+            ],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.2
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Gemini API Error: Status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const jsonText = data.candidates[0].content.parts[0].text;
+        const parsedReport = JSON.parse(jsonText);
+        return parsedReport;
+      } catch (err) {
+        console.warn('[EfiKoding] Gagal memanggil AI eksternal, beralih ke Fallback Engine:', err);
+        return generateDeterministicReport(studentData);
+      }
+    }
+
+    /* ===================================================
+       LOGIKA RENDER MATRIKS 4 KUADRAN (KANVAS 2D)
+       =================================================== */
+    function renderQuadrantCanvas(sSkill, sEff) {
+      const canvas = document.getElementById('quadrantCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Bersihkan kanvas
+      ctx.clearRect(0, 0, width, height);
+
+      // Area padding sumbu
+      const pad = 35;
+      const plotW = width - pad * 2;
+      const plotH = height - pad * 2;
+
+      // Konversi koordinat: X=0..100, Y=0..100
+      const toCanvasX = (val) => pad + (val / 100) * plotW;
+      const toCanvasY = (val) => pad + plotH - (val / 100) * plotH;
+
+      const splitX = toCanvasX(70);
+      const splitY = toCanvasY(70);
+
+      // 1. Gambar Latar Kuadran Lembut
+      // Q2: Kiri Atas (Underconfident) - Amber
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.08)';
+      ctx.fillRect(pad, pad, splitX - pad, splitY - pad);
+
+      // Q1: Kanan Atas (Mastery) - Emerald
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+      ctx.fillRect(splitX, pad, pad + plotW - splitX, splitY - pad);
+
+      // Q4: Kiri Bawah (Struggling) - Rose
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.08)';
+      ctx.fillRect(pad, splitY, splitX - pad, pad + plotH - splitY);
+
+      // Q3: Kanan Bawah (Overconfident) - Orange
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.08)';
+      ctx.fillRect(splitX, splitY, pad + plotW - splitX, pad + plotH - splitY);
+
+      // 2. Garis Grid Pembatas (Ambang 70)
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.5;
+      
+      // Garis vertikal X=70
+      ctx.moveTo(splitX, pad);
+      ctx.lineTo(splitX, pad + plotH);
+      
+      // Garis horizontal Y=70
+      ctx.moveTo(pad, splitY);
+      ctx.lineTo(pad + plotW, splitY);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset line dash
+
+      // 3. Garis Sumbu Utama Luar
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(pad, pad, plotW, plotH);
+
+      // 4. Label Kuadran Ringkas
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#059669';
+      ctx.fillText('Q1: MASTERY', splitX + 8, pad + 18);
+
+      ctx.fillStyle = '#d97706';
+      ctx.fillText('Q2: UNDERCONFIDENT', pad + 8, pad + 18);
+
+      ctx.fillStyle = '#ea580c';
+      ctx.fillText('Q3: OVERCONFIDENT', splitX + 8, splitY + 18);
+
+      ctx.fillStyle = '#e11d48';
+      ctx.fillText('Q4: STRUGGLING', pad + 8, splitY + 18);
+
+      // 5. Label Sumbu X & Y
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('Kemampuan Aktual (S_skill) ->', pad + plotW / 2 - 60, height - 10);
+
+      ctx.save();
+      ctx.translate(14, pad + plotH / 2 + 50);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Efikasi Diri (S_eff) ->', 0, 0);
+      ctx.restore();
+
+      // Label Nilai Kritis 0, 70, 100
+      ctx.fillText('0', pad - 4, pad + plotH + 14);
+      ctx.fillText('70', splitX - 6, pad + plotH + 14);
+      ctx.fillText('100', pad + plotW - 10, pad + plotH + 14);
+
+      ctx.fillText('70', pad - 18, splitY + 4);
+      ctx.fillText('100', pad - 22, pad + 8);
+
+      // 6. Gambar Titik Koordinat Siswa
+      const posX = toCanvasX(sSkill);
+      const posY = toCanvasY(sEff);
+
+      // Halo berdenyut
+      ctx.beginPath();
+      ctx.arc(posX, posY, 12, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(37, 99, 235, 0.25)';
+      ctx.fill();
+
+      // Inti titik
+      ctx.beginPath();
+      ctx.arc(posX, posY, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#2563eb';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Label Koordinat Siswa
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`(${sSkill.toFixed(0)}, ${sEff.toFixed(0)})`, posX + 10, posY - 4);
+    }
+
+    /* ===================================================
+       MANAJEMEN NAVIGASI & PERAN PENGGUNA
+       =================================================== */
+    function setRole(role) {
+      appState.role = role;
+      const btnStudent = document.getElementById('role-btn-student');
+      const btnAdmin = document.getElementById('role-btn-admin');
+      const viewStudent = document.getElementById('view-student');
+      const viewAdmin = document.getElementById('view-admin');
+
+      if (role === 'student') {
+        btnStudent.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
+        btnAdmin.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all text-slate-600 hover:text-slate-900";
+        viewStudent.classList.remove('hidden');
+        viewAdmin.classList.add('hidden');
+      } else {
+        btnAdmin.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all bg-white text-blue-700 shadow-sm border border-slate-200";
+        btnStudent.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all text-slate-600 hover:text-slate-900";
+        viewAdmin.classList.remove('hidden');
+        viewStudent.classList.add('hidden');
+        
+        // Render ulang grafik saat masuk ke dashboard admin
+        setTimeout(() => {
+          renderQuadrantCanvas(appState.admin.sSkill, appState.admin.sEff);
+        }, 50);
+      }
+      lucide.createIcons();
+    }
+
+    function setAdminTab(tab) {
+      appState.admin.activeTab = tab;
+      const tabCalc = document.getElementById('admin-tab-calc');
+      const tabBank = document.getElementById('admin-tab-bank');
+      const contentCalc = document.getElementById('admin-content-calc');
+      const contentBank = document.getElementById('admin-content-bank');
+
+      if (tab === 'calc') {
+        tabCalc.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-blue-600 text-white flex items-center justify-center space-x-1.5 transition-all";
+        tabBank.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center space-x-1.5 transition-all";
+        contentCalc.classList.remove('hidden');
+        contentBank.classList.add('hidden');
+      } else {
+        tabBank.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-blue-600 text-white flex items-center justify-center space-x-1.5 transition-all";
+        tabCalc.className = "flex-1 py-2 px-3 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center space-x-1.5 transition-all";
+        contentBank.classList.remove('hidden');
+        contentCalc.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    /* ===================================================
+       ALUR SISWA (STUDENT FLOW LOGIC)
+       =================================================== */
+    function startStudentAssessment() {
+      const name = document.getElementById('student-name-input').value.trim() || 'Siswa EfiKoding';
+      const grade = document.getElementById('student-grade-input').value;
+      const levelChoice = document.querySelector('input[name="student-level-choice"]:checked').value;
+
+      appState.student.name = name;
+      appState.student.grade = grade;
+      appState.student.level = levelChoice;
+
+      // Render 12 Butir Angket Baku
+      renderSurveyItems();
+
+      document.getElementById('student-step-onboarding').classList.add('hidden');
+      document.getElementById('student-step-survey').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function backToOnboarding() {
+      document.getElementById('student-step-survey').classList.add('hidden');
+      document.getElementById('student-step-onboarding').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderSurveyItems() {
+      const container = document.getElementById('survey-items-container');
+      container.innerHTML = '';
+
+      let currentSubscale = '';
+
+      SURVEY_ITEMS.forEach((item, index) => {
+        if (item.subscale !== currentSubscale) {
+          currentSubscale = item.subscale;
+          const subHeading = document.createElement('div');
+          subHeading.className = 'pt-2 pb-1 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center space-x-2';
+          subHeading.innerHTML = `<i data-lucide="bookmark" class="w-3.5 h-3.5"></i><span>Sub-Skala: ${currentSubscale}</span>`;
+          container.appendChild(subHeading);
+        }
+
+        const itemCard = document.createElement('div');
+        itemCard.className = 'p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3';
+        
+        const questionText = document.createElement('p');
+        questionText.className = 'text-xs sm:text-sm font-semibold text-slate-800';
+        questionText.innerText = `${index + 1}. ${item.text}`;
+        itemCard.appendChild(questionText);
+
+        const optionsRow = document.createElement('div');
+        optionsRow.className = 'grid grid-cols-5 gap-1.5 sm:gap-2';
+
+        const labels = ['Sangat Tidak', 'Tidak', 'Cukup', 'Yakin', 'Sangat'];
+        for (let score = 1; score <= 5; score++) {
+          const optLabel = document.createElement('label');
+          optLabel.className = 'flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-blue-400 text-center transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50';
+          
+          const isChecked = appState.student.surveyScores[index] === score ? 'checked' : '';
+          optLabel.innerHTML = `
+            <input type="radio" name="survey_q_${index}" value="${score}" ${isChecked} onchange="appState.student.surveyScores[${index}] = ${score}" class="sr-only">
+            <span class="text-xs sm:text-sm font-bold text-slate-900">${score}</span>
+            <span class="text-[10px] text-slate-500 leading-tight mt-0.5">${labels[score - 1]}</span>
+          `;
+          optionsRow.appendChild(optLabel);
+        }
+
+        itemCard.appendChild(optionsRow);
+        container.appendChild(itemCard);
+      });
+    }
+
+    function submitSurveyAndStartQuiz() {
+      document.getElementById('student-step-survey').classList.add('hidden');
+      document.getElementById('student-step-quiz').classList.remove('hidden');
+      appState.student.quizIndex = 0;
+      appState.student.quizAnswers = {};
+      renderQuizQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateConfidenceDisplay(val) {
+      const badge = document.getElementById('confidence-badge');
+      const labels = [
+        'Skala 1: Hanya Menebak (20%)',
+        'Skala 2: Kurang Yakin (40%)',
+        'Skala 3: Cukup Yakin (60%)',
+        'Skala 4: Yakin Benar (80%)',
+        'Skala 5: Sangat Yakin & Terbukti (100%)'
+      ];
+      badge.innerText = labels[val - 1];
+    }
+
+    function renderQuizQuestion() {
+      const level = appState.student.level;
+      const questions = QUESTION_BANK[level];
+      const index = appState.student.quizIndex;
+      const q = questions[index];
+
+      // Update Header
+      document.getElementById('quiz-question-badge').innerText = `Soal ${index + 1} dari ${questions.length} (Level ${level})`;
+      document.getElementById('quiz-question-domain').innerText = `Domain: ${q.domain}`;
+      
+      const pct = ((index + 1) / questions.length) * 100;
+      document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
+
+      // Update Isi Teks
+      document.getElementById('quiz-context-text').innerText = q.context;
+      document.getElementById('quiz-question-text').innerText = q.question;
+
+      // Update Pilihan Opsi
+      const optionsContainer = document.getElementById('quiz-options-container');
+      optionsContainer.innerHTML = '';
+
+      const currentAnswer = appState.student.quizAnswers[q.code];
+
+      q.options.forEach(opt => {
+        const optCard = document.createElement('label');
+        optCard.className = 'flex items-start space-x-3 p-3.5 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-blue-400 transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50';
+        
+        const isChecked = (currentAnswer && currentAnswer.chosen === opt.key) ? 'checked' : '';
+        optCard.innerHTML = `
+          <input type="radio" name="quiz_current_option" value="${opt.key}" ${isChecked} class="mt-1 text-blue-600 focus:ring-blue-500">
+          <div class="text-xs sm:text-sm text-slate-800 leading-relaxed">
+            <span class="font-bold text-slate-900">${opt.key}.</span> ${opt.text}
+          </div>
+        `;
+        optionsContainer.appendChild(optCard);
+      });
+
+      // Update Slider Keyakinan
+      const slider = document.getElementById('confidence-slider');
+      const confVal = currentAnswer ? currentAnswer.confidence : 3;
+      slider.value = confVal;
+      updateConfidenceDisplay(confVal);
+
+      // Update Tombol Navigasi
+      document.getElementById('quiz-prev-btn').disabled = (index === 0);
+      document.getElementById('quiz-next-btn').innerHTML = (index === questions.length - 1)
+        ? `<span>Selesai & Lihat Refleksi</span> <i data-lucide="check" class="w-4 h-4"></i>`
+        : `<span>Soal Selanjutnya</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+
+      lucide.createIcons();
+    }
+
+    function saveCurrentQuizAnswer() {
+      const level = appState.student.level;
+      const questions = QUESTION_BANK[level];
+      const q = questions[appState.student.quizIndex];
+      const selectedRadio = document.querySelector('input[name="quiz_current_option"]:checked');
+      const confidence = parseInt(document.getElementById('confidence-slider').value);
+
+      if (!selectedRadio) {
+        alert('Silakan pilih salah satu opsi jawaban sebelum melanjutkan.');
+        return false;
+      }
+
+      appState.student.quizAnswers[q.code] = {
+        chosen: selectedRadio.value,
+        confidence: confidence,
+        correct: (selectedRadio.value === q.answer)
+      };
+
+      return true;
+    }
+
+    function nextQuizQuestion() {
+      if (!saveCurrentQuizAnswer()) return;
+
+      const level = appState.student.level;
+      const questions = QUESTION_BANK[level];
+
+      if (appState.student.quizIndex < questions.length - 1) {
+        appState.student.quizIndex++;
+        renderQuizQuestion();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        finishStudentAssessment();
+      }
+    }
+
+    function prevQuizQuestion() {
+      saveCurrentQuizAnswer();
+      if (appState.student.quizIndex > 0) {
+        appState.student.quizIndex--;
+        renderQuizQuestion();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function finishStudentAssessment() {
+      const level = appState.student.level;
+      const questions = QUESTION_BANK[level];
+      
+      // 1. Hitung Kemampuan Aktual
+      let correctCount = 0;
+      let totalConfidence = 0;
+      questions.forEach(q => {
+        const ans = appState.student.quizAnswers[q.code];
+        if (ans && ans.correct) correctCount++;
+        if (ans) totalConfidence += ans.confidence;
+      });
+
+      const sSkill = computeSkillScore(correctCount, questions.length);
+
+      // 2. Hitung Efikasi Diri (Rata-rata Slider Soal dan Angket 12 Butir)
+      const avgSlider = totalConfidence / questions.length;
+      const surveySum = appState.student.surveyScores.reduce((a, b) => a + b, 0);
+      const avgSurvey = surveySum / 12;
+      const combinedAvgEfficacy = (avgSlider + avgSurvey) / 2;
+      const sEff = computeEfficacyScore(combinedAvgEfficacy);
+
+      // 3. Kalibrasi Metakognitif
+      const iCal = computeCalibrationIndex(sEff, sSkill);
+      const quadrant = classifyQuadrant(sSkill, sEff, iCal);
+
+      appState.student.calculated = {
+        sSkill,
+        sEff,
+        iCal,
+        quadrant
+      };
+
+      // Tampilkan View Refleksi Siswa
+      document.getElementById('student-step-quiz').classList.add('hidden');
+      document.getElementById('student-step-result').classList.remove('hidden');
+
+      document.getElementById('res-student-name').innerText = appState.student.name;
+      document.getElementById('res-skill-score').innerText = sSkill.toFixed(0);
+      document.getElementById('res-eff-score').innerText = `${sEff.toFixed(0)}%`;
+
+      document.getElementById('res-skill-desc').innerText = sSkill >= 70
+        ? 'Penguasaan logikamu sangat baik dan tuntas.'
+        : 'Kemampuan dasarmu siap ditingkatkan melalui latihan bertahap.';
+
+      document.getElementById('res-eff-desc').innerText = sEff >= 70
+        ? 'Keyakinan dirimu sangat kuat dan positif.'
+        : 'Jangan ragu, kemampuanmu akan terus bertumbuh!';
+
+      // Pesan Mindset
+      let mindsetMsg = "";
+      if (quadrant === 'MASTERY') {
+        mindsetMsg = "Luar biasa! Pemikiran logismu sangat tajam dan kamu memiliki rasa percaya diri yang objektif. Teruslah mencari tantangan koding baru dan bantu teman-temanmu belajar!";
+      } else if (quadrant === 'UNDERCONFIDENT') {
+        mindsetMsg = "Kamu memiliki bakat logika yang sangat hebat, lebih baik dari yang kamu duga! Jangan pernah takut salah, percayalah pada alur berpikirmu sendiri.";
+      } else if (quadrant === 'OVERCONFIDENT') {
+        mindsetMsg = "Antusiasme dan semangatmu luar biasa tinggi! Ingatlah untuk selalu memeriksa kembali setiap alur kode dengan teliti agar tidak ada kesalahan kecil yang terlewat.";
+      } else {
+        mindsetMsg = "Setiap programmer handal selalu memulai dari awal. Tetap semangat mencoba tantangan sederhana setiap hari, kemampuanmu pasti akan berkembang pesat!";
+      }
+      document.getElementById('res-mindset-message').innerText = mindsetMsg;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    // Sinkronisasi Hasil Siswa ke Dashboard Admin
+    function syncStudentToAdmin() {
+      if (!appState.student.calculated) return;
+      
+      appState.admin.name = appState.student.name;
+      appState.admin.grade = appState.student.grade;
+      appState.admin.level = appState.student.level;
+      
+      const calc = appState.student.calculated;
+      appState.admin.sSkill = calc.sSkill;
+      appState.admin.sEff = calc.sEff;
+      appState.admin.iCal = calc.iCal;
+      appState.admin.quadrant = calc.quadrant;
+
+      // Update Form Admin
+      document.getElementById('admin-input-name').value = appState.admin.name;
+      document.getElementById('admin-input-grade').value = appState.admin.grade;
+      document.querySelector(`input[name="admin-level-radio"][value="${appState.admin.level}"]`).checked = true;
+
+      // Update Slider Efikasi (skala 1-5)
+      const effRating = (calc.sEff / 100) * 5;
+      document.getElementById('admin-slider-eff').value = effRating.toFixed(1);
+      document.getElementById('admin-val-eff').innerText = `${effRating.toFixed(1)} / 5.0 (${calc.sEff.toFixed(0)}%)`;
+
+      // Update Domain Sliders sesuai skor
+      document.getElementById('admin-slider-decomp').value = calc.sSkill;
+      document.getElementById('admin-slider-pattern').value = calc.sSkill;
+      document.getElementById('admin-slider-logic').value = calc.sSkill;
+      document.getElementById('admin-slider-debug').value = calc.sSkill;
+      
+      document.getElementById('admin-val-decomp').innerText = `${calc.sSkill.toFixed(0)}%`;
+      document.getElementById('admin-val-pattern').innerText = `${calc.sSkill.toFixed(0)}%`;
+      document.getElementById('admin-val-logic').innerText = `${calc.sSkill.toFixed(0)}%`;
+      document.getElementById('admin-val-debug').innerText = `${calc.sSkill.toFixed(0)}%`;
+
+      updateAdminMetricsUI();
+      triggerGenerateReport();
+    }
+
+    /* ===================================================
+       ALUR ADMIN / GURU (ADMIN FLOW LOGIC)
+       =================================================== */
+    function onDomainSliderChange() {
+      const d1 = parseInt(document.getElementById('admin-slider-decomp').value);
+      const d2 = parseInt(document.getElementById('admin-slider-pattern').value);
+      const d3 = parseInt(document.getElementById('admin-slider-logic').value);
+      const d4 = parseInt(document.getElementById('admin-slider-debug').value);
+
+      document.getElementById('admin-val-decomp').innerText = `${d1}%`;
+      document.getElementById('admin-val-pattern').innerText = `${d2}%`;
+      document.getElementById('admin-val-logic').innerText = `${d3}%`;
+      document.getElementById('admin-val-debug').innerText = `${d4}%`;
+
+      appState.admin.domainScores = { decomp: d1, pattern: d2, logic: d3, debug: d4 };
+      appState.admin.sSkill = (d1 + d2 + d3 + d4) / 4;
+
+      recalculateAdminScores();
+    }
+
+    function onEfficacySliderChange() {
+      const effVal = parseFloat(document.getElementById('admin-slider-eff').value);
+      const sEff = computeEfficacyScore(effVal);
+      document.getElementById('admin-val-eff').innerText = `${effVal.toFixed(1)} / 5.0 (${sEff.toFixed(0)}%)`;
+
+      appState.admin.efficacyRating = effVal;
+      appState.admin.sEff = sEff;
+
+      recalculateAdminScores();
+    }
+
+    function recalculateAdminScores() {
+      const sSkill = appState.admin.sSkill;
+      const sEff = appState.admin.sEff;
+      const iCal = computeCalibrationIndex(sEff, sSkill);
+      const quadrant = classifyQuadrant(sSkill, sEff, iCal);
+
+      appState.admin.iCal = iCal;
+      appState.admin.quadrant = quadrant;
+      appState.admin.name = document.getElementById('admin-input-name').value.trim() || 'Siswa EfiKoding';
+      appState.admin.grade = document.getElementById('admin-input-grade').value.trim() || 'Fase C - Kelas 5 SD';
+      appState.admin.level = document.querySelector('input[name="admin-level-radio"]:checked').value;
+
+      updateAdminMetricsUI();
+    }
+
+    function updateAdminMetricsUI() {
+      const { sSkill, sEff, iCal, quadrant } = appState.admin;
+      const calInfo = getCalibrationStatusText(iCal);
+
+      document.getElementById('calc-sskill-text').innerText = sSkill.toFixed(1);
+      document.getElementById('calc-seff-text').innerText = sEff.toFixed(1);
+      document.getElementById('calc-ical-text').innerText = `${iCal >= 0 ? '+' : ''}${iCal.toFixed(1)} (${calInfo.text.split(' ')[0]})`;
+      
+      const badgeElem = document.getElementById('calc-quadrant-badge');
+      badgeElem.innerText = `Q${quadrant === 'MASTERY' ? '1' : quadrant === 'UNDERCONFIDENT' ? '2' : quadrant === 'OVERCONFIDENT' ? '3' : '4'}: ${quadrant}`;
+
+      const pillElem = document.getElementById('quadrant-display-pill');
+      const pillText = document.getElementById('quadrant-pill-text');
+      pillText.innerText = `KUADRAN ${quadrant === 'MASTERY' ? '1: MASTERY' : quadrant === 'UNDERCONFIDENT' ? '2: UNDERCONFIDENT' : quadrant === 'OVERCONFIDENT' ? '3: OVERCONFIDENT' : '4: STRUGGLING'}`;
+
+      if (quadrant === 'MASTERY') {
+        pillElem.className = "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200";
+        badgeElem.className = "font-bold text-emerald-600";
+      } else if (quadrant === 'UNDERCONFIDENT') {
+        pillElem.className = "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200";
+        badgeElem.className = "font-bold text-amber-600";
+      } else if (quadrant === 'OVERCONFIDENT') {
+        pillElem.className = "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200";
+        badgeElem.className = "font-bold text-orange-600";
+      } else {
+        pillElem.className = "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200";
+        badgeElem.className = "font-bold text-rose-600";
+      }
+
+      // Render Ulang Kanvas Grafik 4 Kuadran
+      renderQuadrantCanvas(sSkill, sEff);
+    }
+
+    async function triggerGenerateReport() {
+      recalculateAdminScores();
+
+      const studentParams = {
+        name: appState.admin.name,
+        grade: appState.admin.grade,
+        level: appState.admin.level,
+        sSkill: appState.admin.sSkill,
+        sEff: appState.admin.sEff,
+        iCal: appState.admin.iCal,
+        quadrant: appState.admin.quadrant,
+        domainScores: appState.admin.domainScores
+      };
+
+      const report = await callGeminiOrFallback(studentParams);
+      appState.admin.reportData = report;
+      renderReportDocument(report);
+    }
+
+    function renderReportDocument(report) {
+      const { name, grade, level, sSkill, sEff, iCal, quadrant } = appState.admin;
+      const calInfo = getCalibrationStatusText(iCal);
+
+      document.getElementById('rep-student-name').innerText = name;
+      document.getElementById('rep-student-grade').innerText = grade;
+      document.getElementById('rep-assessment-level').innerText = `Level ${level} (${level === 'A' ? 'Unplugged' : 'Plugged'})`;
+      
+      document.getElementById('rep-table-skill').innerText = `${sSkill.toFixed(1)} / 100`;
+      document.getElementById('rep-table-eff').innerText = `${sEff.toFixed(1)} / 100`;
+      document.getElementById('rep-table-ical').innerText = `${iCal >= 0 ? '+' : ''}${iCal.toFixed(1)}`;
+      
+      document.getElementById('rep-ical-badge').innerText = `${iCal >= 0 ? '+' : ''}${iCal.toFixed(1)} (${calInfo.text})`;
+      document.getElementById('rep-quadrant-badge').innerText = report.analisis_kuadran.label_kuadran || quadrant;
+
+      // Narasi Laporan
+      document.getElementById('rep-text-summary').innerText = report.ringkasan_eksekutif;
+
+      // Kekuatan & Celah
+      const listStrengths = document.getElementById('rep-list-strengths');
+      listStrengths.innerHTML = '';
+      (report.evaluasi_domain_ct.kekuatan_utama || []).forEach(item => {
+        const li = document.createElement('li');
+        li.innerText = item;
+        listStrengths.appendChild(li);
+      });
+
+      const listGaps = document.getElementById('rep-list-gaps');
+      listGaps.innerHTML = '';
+      (report.evaluasi_domain_ct.area_penguatan || []).forEach(item => {
+        const li = document.createElement('li');
+        li.innerText = item;
+        listGaps.appendChild(li);
+      });
+
+      // Profil Lulusan
+      document.getElementById('rep-text-kritis').innerText = report.capaian_dimensi_profil_lulusan.penalaran_kritis;
+      document.getElementById('rep-text-mandiri').innerText = report.capaian_dimensi_profil_lulusan.kemandirian;
+      document.getElementById('rep-text-kreatif').innerText = report.capaian_dimensi_profil_lulusan.kreativitas;
+
+      // Rekomendasi Guru
+      const listRec = document.getElementById('rep-list-recommendations');
+      listRec.innerHTML = '';
+      (report.rekomendasi_intervensi_guru || []).forEach(item => {
+        const li = document.createElement('li');
+        li.innerText = item;
+        listRec.appendChild(li);
+      });
+
+      // Pesan Siswa
+      document.getElementById('rep-text-studentmsg').innerText = `"${report.pesan_umpan_balik_siswa}"`;
+    }
+
+    function loadSampleData(type) {
+      if (type === 'mastery') {
+        document.getElementById('admin-input-name').value = 'Arkan Danendra';
+        document.getElementById('admin-slider-decomp').value = 80;
+        document.getElementById('admin-slider-pattern').value = 90;
+        document.getElementById('admin-slider-logic').value = 80;
+        document.getElementById('admin-slider-debug').value = 70;
+        document.getElementById('admin-slider-eff').value = 4.2;
+      }
+      onDomainSliderChange();
+      onEfficacySliderChange();
+      triggerGenerateReport();
+    }
+
+    /* ===================================================
+       EKSPOR RESMI: MS WORD (.DOC) & CETAK PDF
+       =================================================== */
+    function exportToWord() {
+      const container = document.getElementById('report-print-container');
+      const clone = container.cloneNode(true);
+
+      // Hapus notifikasi no-print dari berkas Word
+      clone.querySelectorAll('.no-print').forEach(el => el.remove());
+
+      const contentHtml = clone.innerHTML;
+      const fullDocHtml = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>Laporan Diagnostik Psikometrik - ${appState.admin.name}</title>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #0F172A; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; }
+            th, td { border: 1px solid #CBD5E1; padding: 6px 8px; text-align: left; }
+            th { background-color: #F1F5F9; font-weight: bold; }
+            h1 { font-size: 14pt; text-align: center; margin: 0; }
+            h2 { font-size: 11pt; text-align: center; margin: 2px 0 10px 0; }
+            h3 { font-size: 10pt; text-transform: uppercase; border-bottom: 1px solid #CBD5E1; padding-bottom: 3px; }
+            .kop { text-align: center; border-bottom: 2px solid #0F172A; padding-bottom: 8px; margin-bottom: 15px; }
+          </style>
+        </head>
+        <body>
+          ${contentHtml}
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff' + fullDocHtml], {
+        type: 'application/msword'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Laporan_EfiKoding_${appState.admin.name.replace(/\s+/g, '_')}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function printReport() {
+      window.print();
+    }
+
+    /* ===================================================
+       INISIALISASI APLIKASI
+       =================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      // Inisialisasi ikon Lucide
+      lucide.createIcons();
+
+      // Set peran awal ke Admin Dashboard
+      setRole('admin');
+      
+      // Hitung dan muat laporan default awal
+      onDomainSliderChange();
+      onEfficacySliderChange();
+      triggerGenerateReport();
+    });
+  </script>
+</body>
+</html>
